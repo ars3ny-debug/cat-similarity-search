@@ -19,7 +19,7 @@ def load_model():
         return _model_cache
 
     model = mobilenet_v2(pretrained=True)
-    
+
     class _EmbedModel(torch.nn.Module):
         def __init__(self, base):
             super().__init__()
@@ -55,19 +55,24 @@ def embed_image(image_path) -> np.ndarray:
     else:
         img = image_path.convert("RGB")
 
-    transform = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                              std=[0.229, 0.224, 0.225])
-    ])
+    transform = transforms.Compose(
+        [
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+            ),
+        ]
+    )
 
     img_tensor = transform(img).unsqueeze(0).to("cpu")
 
-    model = load_model("cpu")
+    model = load_model()
+
     with torch.no_grad():
         emb = model(img_tensor)
+        emb = emb.squeeze(0).cpu().numpy()
 
-    emb = emb.squeeze(0).cpu().numpy()
     return emb.astype(np.float32)
